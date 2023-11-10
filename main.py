@@ -26,7 +26,6 @@ for row in range(8):
         chessboard[row][col] = (x, y)
 
 # Keep track of occupied squares with pieces
-# Keep track of occupied squares with pieces
 occupied_squares = {
     'a1': 'whiteRook',
     'b1': 'whiteKnight',
