@@ -1,19 +1,17 @@
 import pygame
 import sys
-import os  # Import the os module to work with file paths
+import os
 
 pygame.init()
 
 # Constants
 SCREEN_SIZE = 800
 SQUARE_SIZE = SCREEN_SIZE // 8
-PIECE_SIZE_FACTOR = 0.9  # Adjust the size factor as needed
-# Defining colors, change these as necessary
+PIECE_SIZE_FACTOR = 0.9
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
 RED = (255, 0, 0)
 GREEN = (0, 255, 0)
-
 
 # Initialize Pygame window
 screen = pygame.display.set_mode((SCREEN_SIZE, SCREEN_SIZE))
@@ -68,8 +66,6 @@ occupied_squares = {
 # Load piece images
 image_folder = "images"
 piece_images = {}
-image_name = "whitePawn.svg"
-image_path = os.path.join(image_folder, image_name)
 piece_names = ['whitePawn', 'whiteRook', 'whiteKnight', 'whiteBishop', 'whiteQueen', 'whiteKing',
                'blackPawn', 'blackRook', 'blackKnight', 'blackBishop', 'blackQueen', 'blackKing']
 for piece_name in piece_names:
@@ -82,20 +78,63 @@ selected_square = None
 # Add this code before the main loop to calculate possible moves for each piece
 
 def get_pawn_moves(square, color):
-    col, row = ord(square[0]) - ord('a'), int(square[1])
     moves = []
 
+    # Define the direction and the number of squares to move based on the color
+    direction = 1 if color == 'white' else -1
+    initial_row = 2 if color == 'white' else 7
+    current_row = int(square[1])
+
     # Check one square forward
-    if color == 'white' and row < 8:
-        moves.append(f"{chr(col + ord('a'))}{row + 1}")
-    elif color == 'black' and row > 1:
-        moves.append(f"{chr(col + ord('a'))}{row - 1}")
+    forward_square = f"{square[0]}{current_row + direction}"
+    if 1 <= current_row + direction <= 8 and forward_square not in occupied_squares:
+        moves.append(forward_square)
 
     # Check two squares forward (for the initial move)
-    if ((color == 'white' and row == 2) or (color == 'black' and row == 7)) and 1 <= row + 2 <= 8:
-        moves.append(f"{chr(col + ord('a'))}{row + 2}")
+    double_forward_square = f"{square[0]}{current_row + 2 * direction}"
+    if current_row == initial_row and double_forward_square not in occupied_squares:
+        moves.append(double_forward_square)
+
+    if square == selected_square:
+        print(f"Possible moves for {square}: {moves}")
 
     return moves
+
+
+    return moves
+
+def draw_chessboard():
+    for row in range(8):
+        for col in range(8):
+            color = WHITE if (row + col) % 2 == 0 else BLACK
+            pygame.draw.rect(screen, color,
+                             (chessboard[row][col][0], chessboard[row][col][1], SQUARE_SIZE, SQUARE_SIZE))
+
+def draw_pieces():
+    for row in range(8):
+        for col in range(8):
+            square_name = chr(ord('a') + col) + str(8 - row)
+            if square_name in occupied_squares:
+                piece_name = occupied_squares[square_name]
+                image = piece_images.get(piece_name)
+                if image:
+                    image_rect = image.get_rect(
+                        center=(col * SQUARE_SIZE + SQUARE_SIZE // 2, row * SQUARE_SIZE + SQUARE_SIZE // 2))
+                    screen.blit(image, image_rect)
+
+def draw_highlights():
+    for row in range(8):
+        for col in range(8):
+            square_name = chr(ord('a') + col) + str(8 - row)
+            if selected_square:
+                selected_col = ord(selected_square[0]) - ord('a')
+                selected_row = 8 - int(selected_square[1])
+                if row == selected_row and col == selected_col:
+                    pygame.draw.rect(screen, RED,
+                                     (chessboard[row][col][0], chessboard[row][col][1], SQUARE_SIZE, SQUARE_SIZE), 0)
+                elif square_name in possible_moves.get(selected_square, []):
+                    pygame.draw.rect(screen, GREEN,
+                                     (chessboard[row][col][0], chessboard[row][col][1], SQUARE_SIZE, SQUARE_SIZE), 0)
 
 # Add a dictionary to store possible moves for each piece
 possible_moves = {}
@@ -105,6 +144,7 @@ for square, piece in occupied_squares.items():
     if 'Pawn' in piece:
         possible_moves[square] = get_pawn_moves(square, color)
     # Add similar logic for other pieces
+
 
 
 # Main game loop
@@ -128,45 +168,16 @@ while True:
             else:
                 selected_square = current_selected_square
 
+                # Print possible moves for the selected piece (for debugging)
+                print(f"Possible moves for {selected_square}: {possible_moves.get(selected_square, [])}")
+
     # Draw chessboard using pixel coordinates
-    for row in range(8):
-        for col in range(8):
-            color = WHITE if (row + col) % 2 == 0 else BLACK
+    draw_chessboard()
 
-            # Highlight the selected square
-            if selected_square:
-                selected_col = ord(selected_square[0]) - ord('a')
-                selected_row = 8 - int(selected_square[1])
-                if row == selected_row and col == selected_col:
-                    pygame.draw.rect(screen, RED,
-                                     (chessboard[row][col][0], chessboard[row][col][1], SQUARE_SIZE, SQUARE_SIZE), 0)
-
-            pygame.draw.rect(screen, color,
-                             (chessboard[row][col][0], chessboard[row][col][1], SQUARE_SIZE, SQUARE_SIZE))
-
-            if selected_square:
-                # Draw a red overlay with 50% opacity for the selected piece
-                selected_col = ord(selected_square[0]) - ord('a')
-                selected_row = 8 - int(selected_square[1])
-                if row == selected_row and col == selected_col:
-                    red_overlay = pygame.Surface((SQUARE_SIZE, SQUARE_SIZE), pygame.SRCALPHA)
-                    red_overlay.fill((255, 0, 0, 128))  # 128 for 50% opacity
-                    screen.blit(red_overlay, (chessboard[row][col][0], chessboard[row][col][1]))
+    # Draw highlights
+    draw_highlights()
 
     # Draw the piece on the occupied square (centered and enlarged)
-    for row in range(8):
-        for col in range(8):
-            square_name = chr(ord('a') + col) + str(8 - row)
-            if square_name in occupied_squares:
-                piece_name = occupied_squares[square_name]
-                image = piece_images.get(piece_name)
-                if image:
-                    image_rect = image.get_rect(
-                        center=(col * SQUARE_SIZE + SQUARE_SIZE // 2, row * SQUARE_SIZE + SQUARE_SIZE // 2))
-                    screen.blit(image, image_rect)
+    draw_pieces()
 
     pygame.display.flip()
-
-
-
-
