@@ -77,31 +77,38 @@ selected_square = None
 
 # Add this code before the main loop to calculate possible moves for each piece
 
-def get_pawn_moves(square, color):
+def get_white_pawn_moves(square):
+    col, row = ord(square[0]) - ord('a'), int(square[1])
     moves = []
 
-    # Define the direction and the number of squares to move based on the color
-    direction = 1 if color == 'white' else -1
-    initial_row = 2 if color == 'white' else 7
-    current_row = int(square[1])
-
     # Check one square forward
-    forward_square = f"{square[0]}{current_row + direction}"
-    if 1 <= current_row + direction <= 8 and forward_square not in occupied_squares:
+    forward_square = f"{chr(col + ord('a'))}{row + 1}"
+    if 1 <= row + 1 <= 8 and forward_square not in occupied_squares:
         moves.append(forward_square)
 
     # Check two squares forward (for the initial move)
-    double_forward_square = f"{square[0]}{current_row + 2 * direction}"
-    if current_row == initial_row and double_forward_square not in occupied_squares:
+    double_forward_square = f"{chr(col + ord('a'))}{row + 2}"
+    if row == 2 and double_forward_square not in occupied_squares:
         moves.append(double_forward_square)
 
-    if square == selected_square:
-        print(f"Possible moves for {square}: {moves}")
+    return moves
+
+def get_black_pawn_moves(square):
+    col, row = ord(square[0]) - ord('a'), int(square[1])
+    moves = []
+
+    # Check one square forward
+    forward_square = f"{chr(col + ord('a'))}{row - 1}"
+    if 1 <= row - 1 <= 8 and forward_square not in occupied_squares:
+        moves.append(forward_square)
+
+    # Check two squares forward (for the initial move)
+    double_forward_square = f"{chr(col + ord('a'))}{row - 2}"
+    if row == 7 and double_forward_square not in occupied_squares:
+        moves.append(double_forward_square)
 
     return moves
 
-
-    return moves
 
 def draw_chessboard():
     for row in range(8):
@@ -140,11 +147,13 @@ def draw_highlights():
 possible_moves = {}
 # Calculate and store possible moves for each pawn
 for square, piece in occupied_squares.items():
-    color = piece.split()[0]
     if 'Pawn' in piece:
-        possible_moves[square] = get_pawn_moves(square, color)
-    # Add similar logic for other pieces
+        if 'white' in piece:
+            possible_moves[square] = get_white_pawn_moves(square)
+        else:
+            possible_moves[square] = get_black_pawn_moves(square)
 
+    # Add similar logic for other pieces
 
 
 # Main game loop
