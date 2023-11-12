@@ -115,10 +115,7 @@ def get_pawn_moves(square):
         if 1 <= current_row + direction <= 8 and capture_square in occupied_squares and \
                 color != occupied_squares[capture_square][:5]:  # Check if it's an opponent's piece
             moves.append(capture_square)
-
-    if square == selected_square:
-        print(f"Possible moves for {square}: {moves}")
-
+    #
     return moves
 
 def get_rook_moves(square):
@@ -172,8 +169,6 @@ def get_rook_moves(square):
         else:
             break  # Stop if there's a friendly piece
 
-    if square == selected_square:
-        print(f"Possible moves for {square}: {moves}")
 
     return moves
 
@@ -204,8 +199,6 @@ def get_knight_moves(square):
         elif 0 <= x < 8 and 1 <= y <= 8 and color != occupied_squares[new_square][:5]:  # Check if it's an opponent's piece
             moves.append(new_square)
 
-    if square == selected_square:
-        print(f"Possible moves for {square}: {moves}")
 
     return moves
 
@@ -247,9 +240,6 @@ def get_bishop_moves(square):
     # Filter moves based on the bishop's starting square color
     moves = [move for move in moves if (ord(move[0]) - ord('a') + int(move[1])) % 2 == (col + row) % 2]
 
-    if square == selected_square:
-        print(f"Possible moves for {square}: {moves}")
-
     return moves
 
 
@@ -258,9 +248,6 @@ def get_queen_moves(square):
     bishop_moves = get_bishop_moves(square)
     queen_moves = rook_moves + bishop_moves
 
-    if square == selected_square:
-        print(f"Possible moves for {square} (before filtering): {queen_moves}")
-
     # Define the color based on the current turn
     color = 'white' if turn % 2 != 0 else 'black'
 
@@ -268,8 +255,6 @@ def get_queen_moves(square):
     queen_moves = [move for move in queen_moves if move not in occupied_squares or
                    (move in occupied_squares and color != occupied_squares[move][:5])]
 
-    if square == selected_square:
-        print(f"Possible moves for {square} (after filtering): {queen_moves}")
 
     return queen_moves
 
@@ -292,10 +277,6 @@ def get_king_moves(square):
             # Check if the square is empty or contains an opponent's piece
             if new_square not in occupied_squares or (new_square in occupied_squares and color != occupied_squares[new_square][:5]):
                 moves.append(new_square)
-
-    if square == selected_square:
-        print(f"Possible moves for {square}: {moves}")
-
     return moves
 
 
@@ -330,6 +311,8 @@ def draw_highlights():
 
 
 def record_move(piece, start_square, end_square):
+    global turn, white_moves, black_moves
+
     # Manually assign piece abbreviations
     piece_abbrev = ''
     if 'Pawn' in piece:
@@ -348,11 +331,19 @@ def record_move(piece, start_square, end_square):
     # Build the move notation in standard algebraic notation
     move_notation = f"{piece_abbrev}{start_square.lower()}-{end_square.lower()}"
 
-    # Output the move notation
-    print(f"{move_notation}")
+    # Append the move to the respective move list
+    if turn % 2 != 0:
+        white_moves.append(move_notation)
+    else:
+        black_moves.append(move_notation)
 
-    # You can add the move_notation to a list or file for further storage if needed
-    # moves_list.append(move_notation)
+    # Check if a full turn is completed and print the moves
+    if turn % 2 == 0:
+        print(f"{turn // 2}. {', '.join(white_moves)} {', '.join(black_moves)}")
+        # Reset move lists after printing
+        white_moves = []
+        black_moves = []
+
 
 
 
