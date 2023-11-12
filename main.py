@@ -81,6 +81,8 @@ selected_piece = None
 # Add this code before the main loop to calculate possible moves for each piece
 possible_moves = {}  # Define possible_moves here
 
+
+
 def get_pawn_moves(square):
     col, row = ord(square[0]) - ord('a'), int(square[1])
     moves = []
@@ -101,6 +103,15 @@ def get_pawn_moves(square):
     if current_row == initial_row and double_forward_square not in occupied_squares:
         moves.append(double_forward_square)
 
+    # Check diagonal squares for capturing
+    capture_squares = [f"{chr(ord(square[0]) + 1)}{current_row + direction}",
+                       f"{chr(ord(square[0]) - 1)}{current_row + direction}"]
+
+    for capture_square in capture_squares:
+        if 1 <= current_row + direction <= 8 and capture_square in occupied_squares and \
+                color != occupied_squares[capture_square][:5]:  # Check if it's an opponent's piece
+            moves.append(capture_square)
+
     if square == selected_square:
         print(f"Possible moves for {square}: {moves}")
 
@@ -110,42 +121,59 @@ def get_rook_moves(square):
     col, row = ord(square[0]) - ord('a'), int(square[1])
     moves = []
 
+    # Define the color based on the current turn
+    color = 'white' if turn % 2 != 0 else 'black'
+
     # Check moves to the right
     for c in range(col + 1, 8):
         move = f"{chr(c + ord('a'))}{row}"
         if move not in occupied_squares:
             moves.append(move)
+        elif color != occupied_squares[move][:5]:  # Capture opponent's piece
+            moves.append(move)
+            break  # Stop if there's any piece (friendly or opponent)
         else:
-            break
+            break  # Stop if there's a friendly piece
 
     # Check moves to the left
     for c in range(col - 1, -1, -1):
         move = f"{chr(c + ord('a'))}{row}"
         if move not in occupied_squares:
             moves.append(move)
+        elif color != occupied_squares[move][:5]:  # Capture opponent's piece
+            moves.append(move)
+            break  # Stop if there's any piece (friendly or opponent)
         else:
-            break
+            break  # Stop if there's a friendly piece
 
     # Check moves upwards
     for r in range(row - 1, -1, -1):
         move = f"{chr(col + ord('a'))}{r}"
         if move not in occupied_squares:
             moves.append(move)
+        elif color != occupied_squares[move][:5]:  # Capture opponent's piece
+            moves.append(move)
+            break  # Stop if there's any piece (friendly or opponent)
         else:
-            break
+            break  # Stop if there's a friendly piece
 
     # Check moves downwards
     for r in range(row + 1, 8):
         move = f"{chr(col + ord('a'))}{r}"
         if move not in occupied_squares:
             moves.append(move)
+        elif color != occupied_squares[move][:5]:  # Capture opponent's piece
+            moves.append(move)
+            break  # Stop if there's any piece (friendly or opponent)
         else:
-            break
+            break  # Stop if there's a friendly piece
 
     if square == selected_square:
         print(f"Possible moves for {square}: {moves}")
 
     return moves
+
+
 
 from itertools import product
 
@@ -153,20 +181,26 @@ def get_knight_moves(square):
     col, row = ord(square[0]) - ord('a'), int(square[1])
     moves = []
 
+    # Define the color based on the current turn
+    color = 'white' if turn % 2 != 0 else 'black'
+
     # Define all possible knight moves relative to the current position
     possible_moves = list(product([col - 1, col + 1], [row - 2, row + 2])) + \
                      list(product([col - 2, col + 2], [row - 1, row + 1]))
 
-    # Filter out invalid moves
-    moves = [(x, y) for x, y in possible_moves if 0 <= x < 8 and 1 <= y <= 8]
-
-    # Convert moves to square names
-    moves = [f"{chr(x + ord('a'))}{y}" for x, y in moves if f"{chr(x + ord('a'))}{y}" not in occupied_squares]
+    # Filter out invalid moves and moves that capture an opponent's piece
+    for x, y in possible_moves:
+        new_square = f"{chr(x + ord('a'))}{y}"
+        if 0 <= x < 8 and 1 <= y <= 8 and new_square not in occupied_squares:
+            moves.append(new_square)
+        elif 0 <= x < 8 and 1 <= y <= 8 and color != occupied_squares[new_square][:5]:  # Check if it's an opponent's piece
+            moves.append(new_square)
 
     if square == selected_square:
         print(f"Possible moves for {square}: {moves}")
 
     return moves
+
 
 
 def draw_chessboard():
@@ -183,6 +217,9 @@ def get_bishop_moves(square):
     # Define possible moves for a bishop
     directions = [(-1, -1), (-1, 1), (1, -1), (1, 1)]
 
+    # Define the color based on the current turn
+    color = 'white' if turn % 2 != 0 else 'black'
+
     for direction in directions:
         x, y = col, row
         while True:
@@ -191,7 +228,9 @@ def get_bishop_moves(square):
             if 0 <= x < 8 and 1 <= y <= 8:
                 new_square = f"{chr(x + ord('a'))}{y}"
                 if new_square in occupied_squares:
-                    break  # Stop if the bishop encounters a piece
+                    if color != occupied_squares[new_square][:5]:  # Capture opponent's piece
+                        moves.append(new_square)
+                    break  # Stop if the bishop encounters any piece
                 moves.append(new_square)
             else:
                 break  # Stop if the bishop goes out of the board
@@ -204,15 +243,27 @@ def get_bishop_moves(square):
 
     return moves
 
+
 def get_queen_moves(square):
     rook_moves = get_rook_moves(square)
     bishop_moves = get_bishop_moves(square)
     queen_moves = rook_moves + bishop_moves
 
     if square == selected_square:
-        print(f"Possible moves for {square}: {queen_moves}")
+        print(f"Possible moves for {square} (before filtering): {queen_moves}")
+
+    # Define the color based on the current turn
+    color = 'white' if turn % 2 != 0 else 'black'
+
+    # Filter out moves that capture the player's own pieces
+    queen_moves = [move for move in queen_moves if move not in occupied_squares or
+                   (move in occupied_squares and color != occupied_squares[move][:5])]
+
+    if square == selected_square:
+        print(f"Possible moves for {square} (after filtering): {queen_moves}")
 
     return queen_moves
+
 def get_king_moves(square):
     col, row = ord(square[0]) - ord('a'), int(square[1])
     moves = []
@@ -220,18 +271,24 @@ def get_king_moves(square):
     # Define all possible king moves relative to the current position
     king_moves = [(1, 0), (-1, 0), (0, 1), (0, -1), (1, 1), (1, -1), (-1, 1), (-1, -1)]
 
+    # Define the color based on the current turn
+    color = 'white' if turn % 2 != 0 else 'black'
+
     for move in king_moves:
         new_col, new_row = col + move[0], row + move[1]
         new_square = f"{chr(new_col + ord('a'))}{new_row}"
 
         # Check if the move is within the board boundaries
-        if 0 <= new_col < 8 and 1 <= new_row <= 8 and new_square not in occupied_squares:
-            moves.append(new_square)
+        if 0 <= new_col < 8 and 1 <= new_row <= 8:
+            # Check if the square is empty or contains an opponent's piece
+            if new_square not in occupied_squares or (new_square in occupied_squares and color != occupied_squares[new_square][:5]):
+                moves.append(new_square)
 
     if square == selected_square:
         print(f"Possible moves for {square}: {moves}")
 
     return moves
+
 
 def draw_pieces():
     for row in range(8):
@@ -283,18 +340,22 @@ while True:
                 selected_piece = occupied_squares.get(current_selected_square, None)
                 if selected_piece:
                     selected_square = current_selected_square
-                    if 'Rook' in selected_piece:
-                        possible_moves[selected_square] = get_rook_moves(selected_square)
-                    if 'Knight' in selected_piece:
-                        possible_moves[selected_square] = get_knight_moves(selected_square)
-                    elif 'Bishop' in selected_piece:
-                        possible_moves[selected_square] = get_bishop_moves(selected_square)
-                    elif 'Queen' in selected_piece:
-                        possible_moves[selected_square] = get_queen_moves(selected_square)
-                    elif 'King' in selected_piece:
-                        possible_moves[selected_square] = get_king_moves(selected_square)
+                    if ('white' in selected_piece and turn % 2 == 1) or ('black' in selected_piece and turn % 2 == 0):
+                        # Only allow the piece to be selected if it's the current player's turn
+                        if 'Rook' in selected_piece:
+                            possible_moves[selected_square] = get_rook_moves(selected_square)
+                        elif 'Knight' in selected_piece:
+                            possible_moves[selected_square] = get_knight_moves(selected_square)
+                        elif 'Bishop' in selected_piece:
+                            possible_moves[selected_square] = get_bishop_moves(selected_square)
+                        elif 'Queen' in selected_piece:
+                            possible_moves[selected_square] = get_queen_moves(selected_square)
+                        elif 'King' in selected_piece:
+                            possible_moves[selected_square] = get_king_moves(selected_square)
+                        else:
+                            possible_moves[selected_square] = get_pawn_moves(selected_square)
                     else:
-                        possible_moves[selected_square] = get_pawn_moves(selected_square)
+                        selected_piece = None  # Reset selected_piece if it's not the current player's turn
                 else:
                     selected_piece = None  # Reset selected_piece if no piece is clicked
             elif current_selected_square in possible_moves.get(selected_square, []):
