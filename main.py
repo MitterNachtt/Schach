@@ -104,6 +104,70 @@ def get_pawn_moves(square):
 
     return moves
 
+def get_rook_moves(square):
+    col, row = ord(square[0]) - ord('a'), int(square[1])
+    moves = []
+
+    # Check moves to the right
+    for c in range(col + 1, 8):
+        move = f"{chr(c + ord('a'))}{row}"
+        if move not in occupied_squares:
+            moves.append(move)
+        else:
+            break
+
+    # Check moves to the left
+    for c in range(col - 1, -1, -1):
+        move = f"{chr(c + ord('a'))}{row}"
+        if move not in occupied_squares:
+            moves.append(move)
+        else:
+            break
+
+    # Check moves upwards
+    for r in range(row - 1, -1, -1):
+        move = f"{chr(col + ord('a'))}{r}"
+        if move not in occupied_squares:
+            moves.append(move)
+        else:
+            break
+
+    # Check moves downwards
+    for r in range(row + 1, 8):
+        move = f"{chr(col + ord('a'))}{r}"
+        if move not in occupied_squares:
+            moves.append(move)
+        else:
+            break
+
+    if square == selected_square:
+        print(f"Possible moves for {square}: {moves}")
+
+    return moves
+
+def get_knight_moves(square):
+    col, row = ord(square[0]) - ord('a'), int(square[1])
+    moves = []
+
+    # Define all possible knight moves relative to the current position
+    knight_moves = [(2, 1), (1, 2), (-1, 2), (-2, 1), (-2, -1), (-1, -2), (1, -2), (2, -1)]
+
+    for move in knight_moves:
+        new_col, new_row = col + move[0], row + move[1]
+        new_square = f"{chr(new_col + ord('a'))}{new_row}"
+
+        # Check if the move is within the board boundaries
+        if 0 <= new_col < 8 and 1 <= new_row <= 8 and new_square not in occupied_squares:
+            moves.append(new_square)
+
+    if square == selected_square:
+        print(f"Possible moves for {square}: {moves}")
+
+    return moves
+
+
+
+
 
 def draw_chessboard():
     for row in range(8):
@@ -162,7 +226,10 @@ while True:
                 selected_piece = occupied_squares.get(current_selected_square, None)
                 if selected_piece:
                     selected_square = current_selected_square
-                    possible_moves[selected_square] = get_pawn_moves(selected_square)
+                    if 'Rook' in selected_piece:
+                        possible_moves[selected_square] = get_rook_moves(selected_square)
+                    else:
+                        possible_moves[selected_square] = get_pawn_moves(selected_square)
                     print(f"Possible moves for {selected_square}: {possible_moves.get(selected_square, [])}")
                 else:
                     selected_piece = None  # Reset selected_piece if no piece is clicked
