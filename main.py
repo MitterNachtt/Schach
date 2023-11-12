@@ -74,38 +74,33 @@ for piece_name in piece_names:
                                                        (SQUARE_SIZE * PIECE_SIZE_FACTOR, SQUARE_SIZE * PIECE_SIZE_FACTOR))
 
 selected_square = None
+selected_piece = None
 
 # Add this code before the main loop to calculate possible moves for each piece
+possible_moves = {}  # Define possible_moves here
 
-def get_white_pawn_moves(square):
+def get_pawn_moves(square):
     col, row = ord(square[0]) - ord('a'), int(square[1])
     moves = []
 
+    # Define the direction and the number of squares to move based on the color
+    color = 'white' if square in occupied_squares and 'white' in occupied_squares[square] else 'black'
+    direction = 1 if turn % 2 != 0 else -1
+    initial_row = 2 if turn % 2 != 0 else 7
+    current_row = int(square[1])
+
     # Check one square forward
-    forward_square = f"{chr(col + ord('a'))}{row + 1}"
-    if 1 <= row + 1 <= 8 and forward_square not in occupied_squares:
+    forward_square = f"{square[0]}{current_row + direction}"
+    if 1 <= current_row + direction <= 8 and forward_square not in occupied_squares:
         moves.append(forward_square)
 
     # Check two squares forward (for the initial move)
-    double_forward_square = f"{chr(col + ord('a'))}{row + 2}"
-    if row == 2 and double_forward_square not in occupied_squares:
+    double_forward_square = f"{square[0]}{current_row + 2 * direction}"
+    if current_row == initial_row and double_forward_square not in occupied_squares:
         moves.append(double_forward_square)
 
-    return moves
-
-def get_black_pawn_moves(square):
-    col, row = ord(square[0]) - ord('a'), int(square[1])
-    moves = []
-
-    # Check one square forward
-    forward_square = f"{chr(col + ord('a'))}{row - 1}"
-    if 1 <= row - 1 <= 8 and forward_square not in occupied_squares:
-        moves.append(forward_square)
-
-    # Check two squares forward (for the initial move)
-    double_forward_square = f"{chr(col + ord('a'))}{row - 2}"
-    if row == 7 and double_forward_square not in occupied_squares:
-        moves.append(double_forward_square)
+    if square == selected_square:
+        print(f"Possible moves for {square}: {moves}")
 
     return moves
 
@@ -140,23 +135,14 @@ def draw_highlights():
                     pygame.draw.rect(screen, RED,
                                      (chessboard[row][col][0], chessboard[row][col][1], SQUARE_SIZE, SQUARE_SIZE), 0)
                 elif square_name in possible_moves.get(selected_square, []):
-                    pygame.draw.rect(screen, GREEN,
-                                     (chessboard[row][col][0], chessboard[row][col][1], SQUARE_SIZE, SQUARE_SIZE), 0)
-
-# Add a dictionary to store possible moves for each piece
-possible_moves = {}
-# Calculate and store possible moves for each pawn
-for square, piece in occupied_squares.items():
-    if 'Pawn' in piece:
-        if 'white' in piece:
-            possible_moves[square] = get_white_pawn_moves(square)
-        else:
-            possible_moves[square] = get_black_pawn_moves(square)
-
-    # Add similar logic for other pieces
-
+                    # Create a surface with an alpha channel
+                    green_highlight_surface = pygame.Surface((SQUARE_SIZE, SQUARE_SIZE), pygame.SRCALPHA)
+                    # Set the alpha value to 128 for 50% transparency
+                    green_highlight_surface.fill((0, 255, 0, 128))
+                    screen.blit(green_highlight_surface, (chessboard[row][col][0], chessboard[row][col][1]))
 
 # Main game loop
+turn = 1  # 1 for white, 2 for black
 while True:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
@@ -171,14 +157,26 @@ while True:
             selected_row = mouseY // SQUARE_SIZE
             current_selected_square = f"{chr(ord('a') + selected_col)}{8 - selected_row}"
 
-            if selected_square == current_selected_square:
-                # Toggle selection if clicking on the same square
+            if selected_square is None:
+                # First click - select the piece
+                selected_piece = occupied_squares.get(current_selected_square, None)
+                if selected_piece:
+                    selected_square = current_selected_square
+                    possible_moves[selected_square] = get_pawn_moves(selected_square)
+                    print(f"Possible moves for {selected_square}: {possible_moves.get(selected_square, [])}")
+                else:
+                    selected_piece = None  # Reset selected_piece if no piece is clicked
+            elif current_selected_square in possible_moves.get(selected_square, []):
+                # Second click - move the piece to the new square
+                occupied_squares[current_selected_square] = selected_piece
+                del occupied_squares[selected_square]
                 selected_square = None
-            else:
-                selected_square = current_selected_square
-
-                # Print possible moves for the selected piece (for debugging)
-                print(f"Possible moves for {selected_square}: {possible_moves.get(selected_square, [])}")
+                selected_piece = None
+                turn += 1  # Update the turn
+            elif current_selected_square == selected_square:
+                # Deselect by clicking on the same square again
+                selected_square = None
+                selected_piece = None
 
     # Draw chessboard using pixel coordinates
     draw_chessboard()
