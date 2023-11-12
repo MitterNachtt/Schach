@@ -176,6 +176,63 @@ def draw_chessboard():
             pygame.draw.rect(screen, color,
                              (chessboard[row][col][0], chessboard[row][col][1], SQUARE_SIZE, SQUARE_SIZE))
 
+def get_bishop_moves(square):
+    col, row = ord(square[0]) - ord('a'), int(square[1])
+    moves = []
+
+    # Define possible moves for a bishop
+    directions = [(-1, -1), (-1, 1), (1, -1), (1, 1)]
+
+    for direction in directions:
+        x, y = col, row
+        while True:
+            x += direction[0]
+            y += direction[1]
+            if 0 <= x < 8 and 1 <= y <= 8:
+                new_square = f"{chr(x + ord('a'))}{y}"
+                if new_square in occupied_squares:
+                    break  # Stop if the bishop encounters a piece
+                moves.append(new_square)
+            else:
+                break  # Stop if the bishop goes out of the board
+
+    # Filter moves based on the bishop's starting square color
+    moves = [move for move in moves if (ord(move[0]) - ord('a') + int(move[1])) % 2 == (col + row) % 2]
+
+    if square == selected_square:
+        print(f"Possible moves for {square}: {moves}")
+
+    return moves
+
+def get_queen_moves(square):
+    rook_moves = get_rook_moves(square)
+    bishop_moves = get_bishop_moves(square)
+    queen_moves = rook_moves + bishop_moves
+
+    if square == selected_square:
+        print(f"Possible moves for {square}: {queen_moves}")
+
+    return queen_moves
+def get_king_moves(square):
+    col, row = ord(square[0]) - ord('a'), int(square[1])
+    moves = []
+
+    # Define all possible king moves relative to the current position
+    king_moves = [(1, 0), (-1, 0), (0, 1), (0, -1), (1, 1), (1, -1), (-1, 1), (-1, -1)]
+
+    for move in king_moves:
+        new_col, new_row = col + move[0], row + move[1]
+        new_square = f"{chr(new_col + ord('a'))}{new_row}"
+
+        # Check if the move is within the board boundaries
+        if 0 <= new_col < 8 and 1 <= new_row <= 8 and new_square not in occupied_squares:
+            moves.append(new_square)
+
+    if square == selected_square:
+        print(f"Possible moves for {square}: {moves}")
+
+    return moves
+
 def draw_pieces():
     for row in range(8):
         for col in range(8):
@@ -230,6 +287,12 @@ while True:
                         possible_moves[selected_square] = get_rook_moves(selected_square)
                     if 'Knight' in selected_piece:
                         possible_moves[selected_square] = get_knight_moves(selected_square)
+                    elif 'Bishop' in selected_piece:
+                        possible_moves[selected_square] = get_bishop_moves(selected_square)
+                    elif 'Queen' in selected_piece:
+                        possible_moves[selected_square] = get_queen_moves(selected_square)
+                    elif 'King' in selected_piece:
+                        possible_moves[selected_square] = get_king_moves(selected_square)
                     else:
                         possible_moves[selected_square] = get_pawn_moves(selected_square)
                 else:
