@@ -1,6 +1,8 @@
 import pygame
 import sys
 import os
+from itertools import product
+
 
 pygame.init()
 
@@ -145,28 +147,26 @@ def get_rook_moves(square):
 
     return moves
 
+from itertools import product
+
 def get_knight_moves(square):
     col, row = ord(square[0]) - ord('a'), int(square[1])
     moves = []
 
     # Define all possible knight moves relative to the current position
-    knight_moves = [(2, 1), (1, 2), (-1, 2), (-2, 1), (-2, -1), (-1, -2), (1, -2), (2, -1)]
+    possible_moves = list(product([col - 1, col + 1], [row - 2, row + 2])) + \
+                     list(product([col - 2, col + 2], [row - 1, row + 1]))
 
-    for move in knight_moves:
-        new_col, new_row = col + move[0], row + move[1]
-        new_square = f"{chr(new_col + ord('a'))}{new_row}"
+    # Filter out invalid moves
+    moves = [(x, y) for x, y in possible_moves if 0 <= x < 8 and 1 <= y <= 8]
 
-        # Check if the move is within the board boundaries
-        if 0 <= new_col < 8 and 1 <= new_row <= 8 and new_square not in occupied_squares:
-            moves.append(new_square)
+    # Convert moves to square names
+    moves = [f"{chr(x + ord('a'))}{y}" for x, y in moves if f"{chr(x + ord('a'))}{y}" not in occupied_squares]
 
     if square == selected_square:
         print(f"Possible moves for {square}: {moves}")
 
     return moves
-
-
-
 
 
 def draw_chessboard():
@@ -228,9 +228,10 @@ while True:
                     selected_square = current_selected_square
                     if 'Rook' in selected_piece:
                         possible_moves[selected_square] = get_rook_moves(selected_square)
+                    if 'Knight' in selected_piece:
+                        possible_moves[selected_square] = get_knight_moves(selected_square)
                     else:
                         possible_moves[selected_square] = get_pawn_moves(selected_square)
-                    print(f"Possible moves for {selected_square}: {possible_moves.get(selected_square, [])}")
                 else:
                     selected_piece = None  # Reset selected_piece if no piece is clicked
             elif current_selected_square in possible_moves.get(selected_square, []):
