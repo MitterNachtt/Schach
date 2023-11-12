@@ -21,7 +21,8 @@ pygame.display.set_caption('Schach')
 
 # Define a 2D list to represent the chessboard with pixel coordinates
 chessboard = [[None for _ in range(8)] for _ in range(8)]
-
+# Define a variable to keep track of the moves
+all_moves = []
 # Assign pixel coordinates to each square in the chessboard
 for row in range(8):
     for col in range(8):
@@ -70,6 +71,9 @@ image_folder = "images"
 piece_images = {}
 piece_names = ['whitePawn', 'whiteRook', 'whiteKnight', 'whiteBishop', 'whiteQueen', 'whiteKing',
                'blackPawn', 'blackRook', 'blackKnight', 'blackBishop', 'blackQueen', 'blackKing']
+
+
+
 for piece_name in piece_names:
     image_path = os.path.join(image_folder, f"{piece_name}.svg")
     piece_images[piece_name] = pygame.transform.scale(pygame.image.load(image_path),
@@ -185,8 +189,12 @@ def get_knight_moves(square):
     color = 'white' if turn % 2 != 0 else 'black'
 
     # Define all possible knight moves relative to the current position
-    possible_moves = list(product([col - 1, col + 1], [row - 2, row + 2])) + \
-                     list(product([col - 2, col + 2], [row - 1, row + 1]))
+    possible_moves = [
+        (col - 1, row - 2), (col + 1, row - 2),
+        (col - 2, row - 1), (col + 2, row - 1),
+        (col - 2, row + 1), (col + 2, row + 1),
+        (col - 1, row + 2), (col + 1, row + 2)
+    ]
 
     # Filter out invalid moves and moves that capture an opponent's piece
     for x, y in possible_moves:
@@ -200,6 +208,7 @@ def get_knight_moves(square):
         print(f"Possible moves for {square}: {moves}")
 
     return moves
+
 
 
 
@@ -319,6 +328,48 @@ def draw_highlights():
                     green_highlight_surface.fill((0, 255, 0, 128))
                     screen.blit(green_highlight_surface, (chessboard[row][col][0], chessboard[row][col][1]))
 
+
+def record_move(piece, start_square, end_square):
+    # Manually assign piece abbreviations
+    piece_abbrev = ''
+    if 'Pawn' in piece:
+        piece_abbrev = ''
+    elif 'Rook' in piece:
+        piece_abbrev = 'R'
+    elif 'Knight' in piece:
+        piece_abbrev = 'N'
+    elif 'Bishop' in piece:
+        piece_abbrev = 'B'
+    elif 'Queen' in piece:
+        piece_abbrev = 'Q'
+    elif 'King' in piece:
+        piece_abbrev = 'K'
+
+    # Build the move notation in standard algebraic notation
+    move_notation = f"{piece_abbrev}{start_square.lower()}-{end_square.lower()}"
+
+    # Output the move notation
+    print(f"{move_notation}")
+
+    # You can add the move_notation to a list or file for further storage if needed
+    # moves_list.append(move_notation)
+
+
+
+# Add this function definition along with the existing functions
+def print_moves():
+    global turn, white_moves, black_moves
+    if turn % 2 == 0:
+        print(f"{turn // 2}. {', '.join(white_moves)} {', '.join(black_moves)}")
+        # Reset move lists after printing
+        white_moves = []
+        black_moves = []
+
+
+# Initialize move lists
+white_moves = []
+black_moves = []
+
 # Main game loop
 turn = 1  # 1 for white, 2 for black
 while True:
@@ -359,16 +410,20 @@ while True:
                 else:
                     selected_piece = None  # Reset selected_piece if no piece is clicked
             elif current_selected_square in possible_moves.get(selected_square, []):
-                # Second click - move the piece to the new square
-                occupied_squares[current_selected_square] = selected_piece
-                del occupied_squares[selected_square]
-                selected_square = None
-                selected_piece = None
-                turn += 1  # Update the turn
+                    # Second click - move the piece to the new square
+                    moved_piece = occupied_squares[selected_square]
+                    record_move(moved_piece, selected_square, current_selected_square)
+
+                    occupied_squares[current_selected_square] = selected_piece
+                    del occupied_squares[selected_square]
+                    selected_square = None
+                    selected_piece = None
+                    turn += 1  # Update the turn
+
             elif current_selected_square == selected_square:
-                # Deselect by clicking on the same square again
-                selected_square = None
-                selected_piece = None
+                    # Deselect by clicking on the same square again
+                    selected_square = None
+                    selected_piece = None
 
     # Draw chessboard using pixel coordinates
     draw_chessboard()
